@@ -1,0 +1,153 @@
+﻿@using ImageGeneration.Web.Models
+@using OpenAI_API.Images
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Painting Generator";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Painting Generation</h1>  
+    <p class="text-warning">NO input validation, make sure you provide good data.</p>
+</div>
+
+<div class="row">
+    <div class="col-12 col-md-6">
+        <form method="post" class="w-100" asp-action="GeneratePaintingPrompt">
+            <div class="my-3">
+                <label class="form-label fw-bold" for="lblPaintingTheme">Select a painting theme!</label>
+                <select name="paintTheme" id="lblPaintingTheme" class="form-select" aria-label="Select a painting theme">
+                    <option value="Nature">Nature</option>
+                    <option value="Abstract">Abstract</option>
+                    <option value="Portraits">Portraits</option>
+                    <option value="Still Life">Still Life</option>
+                    <option value="Urban Scenes">Urban Scenes</option>
+                    <option value="Fantasy">Fantasy</option>
+                    <option value="Historical">Historical</option>
+                    <option value="Surrealism">Surrealism</option>
+                    <option value="Impressionism">Impressionism</option>
+                    <option value="Pop Art">Pop Art</option>
+                    <option value="Cubism">Cubism</option>
+                    <option value="Expressionism">Expressionism</option>
+                    <option value="Minimalism">Minimalism</option>
+                    <option value="Realism">Realism</option>
+                    <option value="Wildlife">Wildlife</option>
+                </select>
+            </div>
+
+            <div class="my-3">
+                <label class="form-label fw-bold" for="txtPaintShortDescription">Write a short description about the painting you want tp generate!</label>
+                <input type="text" class="form-control" name="shortDesc" /> 
+            </div>
+
+            <div class="my-2">
+                <button type="submit" class="btn btn-primary">Give me the painting prompt</button>
+            </div>
+        </form>
+    </div>
+
+    @if (TempData["PaintPrompt"] is not null)
+    {
+        <div class="col-12 col-md-6">
+            <form method="post" class="w-100" asp-action="GenerateImages" id="frmGenImages">
+                <div class="my-3">
+                    <label class="form-label fw-bold" for="ddlModels">Select a model to generate the painting</label>
+                    <select id="ddlModels" class="form-select" name="model">
+                        <option value="dall-e-2">dall-e-2</option>
+                        <option value="dall-e-3">dall-e-3</option>
+                    </select>
+                </div>
+
+                <div class="my-3" id="dallE2ImgSize">
+                    <label class="fw-bold">Select image size</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" value="256x256" name="e2ImgSize" checked>
+                        <label class="form-check-label">
+                            256x256
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" value="512x512" name="e2ImgSize">
+                        <label class="form-check-label">
+                            512x512
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" value="1024x1024" name="e2ImgSize">
+                        <label class="form-check-label">
+                            1024x1024
+                        </label>
+                    </div>
+                </div>
+
+                <div class="my-3 d-none" id="dallE3ImgSize">
+                    <label class="fw-bold">Select image size</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" value="1024x1024" name="e3ImgSize" checked>
+                        <label class="form-check-label">
+                            1024x1024
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" value="1024x1792" name="e3ImgSize">
+                        <label class="form-check-label">
+                            1024x1792
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" value="1792x1024" name="e3ImgSize">
+                        <label class="form-check-label">
+                            1792x1024
+                        </label>
+                    </div>
+                </div>
+
+                <div class="my-3 d-none" id="dallE3ImgQuality">
+                    <label class="fw-bold">Select image quality</label>
+                    <select id="ddlImageQuality" class="form-select" name="quality">
+                        <option value="standard">Standard</option>
+                        <option value="hd">High Definition</option>
+                    </select>
+                </div>
+
+                <div class="my-3">
+                    <p class="text-info lead">For simplicity we'll generate one image for dall e 3 and two images for dall e 2 by default</p>
+                </div>
+
+                <div class="my-3">
+                    <label class="form-label fw-bold" for="txtPrompt">This is what you'll get!</label>
+                    <label class="form-label">Image Title: @(JsonSerializer.Deserialize<PaintingModel>(TempData["PaintPrompt"].ToString()).Title)</label>
+                    <textarea name="prompt" id="txtPrompt" class="form-control" rows="5" name="prompt">
+                        @(JsonSerializer.Deserialize<PaintingModel>(TempData["PaintPrompt"].ToString().Trim()).Description)
+                    </textarea>
+                </div>
+                <div class="my-3">
+                    <button type="submit" class="btn btn-primary" onclick="return GenerateImg();">
+                        <div class="spinner-border mx-2 d-none" id="genStatus" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Generate painting
+                    </button>
+                </div>
+            </form>
+        </div>
+    }
+</div>
+
+<div class="row">
+    @if (TempData["Img1"] is not null)
+    {        
+            <div class="col-12 col-md-6">
+                <p>Image</p>
+            <img class="img-fluid" src="@TempData["Img1"].ToString()" />
+            </div>
+    }
+
+    @if (TempData["Img2"] is not null)
+    {
+        <div class="col-12 col-md-6">
+            <p>Image</p>
+            <img class="img-fluid" src="@TempData["Img2"].ToString()" />
+        </div>
+
+    }
+</div>
