@@ -55,7 +55,7 @@ namespace ImageGeneration.Web.Controllers
 
             if (model == AIModels.DALLE2)
             {
-                imgReq = new ImageGenerationRequest(prompt, 2, ConvertSizeFromString(e2ImgSize)) { Model = Model.DALLE2, ResponseFormat = ImageResponseFormat.Url };
+                imgReq = new ImageGenerationRequest(prompt.Trim(), 2, ConvertSizeFromString(e2ImgSize)) { Model = Model.DALLE2, ResponseFormat = ImageResponseFormat.Url };
             }
 
             if (model == AIModels.DALLE3)
